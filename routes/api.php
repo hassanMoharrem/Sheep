@@ -38,6 +38,20 @@ Route::middleware('auth:sanctum')->prefix('admin')->group(function () {
         // Route::put('/{id}', [\App\Http\Controllers\Admin\TaskController::class, 'update']);
         // Route::delete('/{id}', [\App\Http\Controllers\Admin\TaskController::class, 'destroy']);
     });
+    Route::prefix('statuses')->group(function() {
+        Route::get('/', [\App\Http\Controllers\Admin\StatusController::class, 'index']);
+        // Route::post('/', [\App\Http\Controllers\Admin\StatusController::class, 'store']);
+        // Route::get('/{id}', [\App\Http\Controllers\Admin\StatusController::class, 'show']);
+        // Route::put('/{id}', [\App\Http\Controllers\Admin\StatusController::class, 'update']);
+        // Route::delete('/{id}', [\App\Http\Controllers\Admin\StatusController::class, 'destroy']);
+    });
+    Route::prefix('breeds')->group(function() {
+        Route::get('/', [\App\Http\Controllers\Admin\BreedController::class, 'index']);
+        // Route::post('/', [\App\Http\Controllers\Admin\BreedController::class, 'store']);
+        //Route::get('/{id}', [\App\Http\Controllers\Admin\BreedController::class, 'show']);
+        //Route::put('/{id}', [\App\Http\Controllers\Admin\BreedController::class, 'update']);
+        //Route::delete('/{id}', [\App\Http\Controllers\Admin\BreedController::class, 'destroy']);
+    });
 
 });
 

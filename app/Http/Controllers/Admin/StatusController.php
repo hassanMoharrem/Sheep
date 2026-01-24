@@ -14,7 +14,7 @@ class StatusController extends Controller
         if ($request->filled('name')) {
             $query->where('name', 'like', '%' . $request->name . '%');
         }
-        $data = $query->orderBy('id', 'desc')->paginate(10);
+        $data = $query->orderBy('id', 'desc')->get();
 
         return response()->json([
             'status' => 200,
