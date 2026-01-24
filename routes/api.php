@@ -9,13 +9,8 @@ use App\Http\Controllers\Admin\NoteController;
 // Login route for Sanctum
 Route::post('login', [LoginController::class, 'login']);
 
-// Protected route example
-// Sheep routes
 
-Route::middleware('auth:sanctum')->prefix('admin')->group(function () {
-    Route::get('/user', function (Request $request) {
-        return $request->user();
-    });
+Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
     Route::prefix('sheep')->group(function() {
         Route::get('/', [SheepController::class, 'index']);
         Route::post('/', [SheepController::class, 'store']);

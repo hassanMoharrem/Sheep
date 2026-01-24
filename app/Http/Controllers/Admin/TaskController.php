@@ -7,15 +7,19 @@ use Illuminate\Support\Facades\Validator;
 
 class TaskController extends Controller
 {
-    // 'sheep_id', 'action_type', 'scheduled_date', 'status', 'result', 'completed_at'];
 
     public function index(Request $request,$id)
     {
-        $query = Task::where('sheep_id',$id);
-        if ($request->filled('action_type_id')) {
-            $query->where('action_type_id', 'like', '%' . $request->action_type_id . '%');
+        $query = Task::where('sheep_id',$id)->with('actionType');
+        
+        if (!$query->exists()) {
+            return response()->json([
+                'status' => 404,
+                'message' => 'No Tasks Found',
+                'success' => false,
+            ], 404);
         }
-        $data = $query->orderBy('id', 'desc')->paginate(10);
+        $data = $query->orderBy('id', 'desc')->get();
         return response()->json([
             'status' => 200,
             'message' => 'Data Retrieved',

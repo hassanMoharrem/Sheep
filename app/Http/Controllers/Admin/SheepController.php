@@ -213,13 +213,19 @@ class SheepController extends Controller
         $sheep = Sheep::create($data);
 
         // إذا كانت أنثى وليست "رضيعه"، أضف لها أول مهمة تلقائية حسب الحالة
+        // when she is  
+        //  رضيعى =< مفطومه => ملقحه => حامل => والد => ملقحه => ....
         if ($sheep->gender === 'female') {
             $status = \App\Models\Status::find($sheep->current_status_id);
-            if ($status && $status->name !== 'رضيعه') {
+            if ($status) {
                 $nextAction = null;
                 $nextDate = null;
                 $now = now();
                 switch ($status->name) {
+                    case 'رضيعه':
+                        $nextAction = Status::where('name', 'مفطومه')->first()->id; // فطام
+                        $nextDate = $now->addMonths(2);
+                        break;
                     case 'مفطومه':
                         $nextAction = Status::where('name', 'ملقحه')->first()->id; // تلقيح 
                         $nextDate = $now->addMonths(6);
