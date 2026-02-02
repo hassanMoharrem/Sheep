@@ -16,13 +16,15 @@ return new class extends Migration
         $table->string('code')->unique(); // رقم التعريف مثل #11
         $table->enum('gender', ['male', 'female']);
         $table->date('birth_date');
+        $table->string('weight')->nullable();
     
         // العلاقات
         $table->foreignId('breed_id')->constrained('breeds')->onDelete('cascade');
         $table->foreignId('current_status_id')->constrained('statuses')->onDelete('cascade');
-        $table->foreignId('health_status_id')->constrained('statuses')->onDelete('cascade');
+        $table->enum('health_status_id', [1 , 2 , 3])->default(1); // enum ['1', '3', '2']
         $table->foreignId('next_status_id')->constrained('statuses')->onDelete('cascade');
         $table->boolean('is_active')->default(true);
+        $table->boolean('visible')->default(true);
         // ربط المولود بالأم (Self-referencing relationship)
         $table->unsignedBigInteger('mother_id')->nullable();
         $table->foreign('mother_id')->references('id')->on('sheep')->onDelete('set null');

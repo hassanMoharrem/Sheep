@@ -16,7 +16,7 @@ return new class extends Migration
     $table->foreignId('sheep_id')->constrained('sheep')->onDelete('cascade');
     // نوع الإجراء القادم
     $table->foreignId('action_type_id')->constrained('statuses')->onDelete('cascade');
-    $table->date('scheduled_date'); // التاريخ الذي سيظهر فيه الإجراء في الجدول
+    $table->date('scheduled_date')->nullable(); // التاريخ الذي سيظهر فيه الإجراء في الجدول
     $table->enum('status', ['pending', 'completed'])->default('pending');
     $table->string('result')->nullable(); // نتيجة المستخدم (تم، حامل، حايل)
     $table->timestamp('completed_at')->nullable();

@@ -1,20 +1,21 @@
 <?php
 namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
-use App\Models\Status;
+use App\Models\ExpenseFrequency;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-// Api controller for managing Statuss in the admin panel
-class StatusController extends Controller
+// Api controller for managing expense frequencies in the admin panel
+class ExpenseFrequencyController extends Controller
 {
         public function index(Request $request)
     {
-        $query = Status::query();
+        $query = ExpenseFrequency::query();
 
         if ($request->filled('name')) {
             $query->where('name', 'like', '%' . $request->name . '%');
         }
         $data = $query->orderBy('id', 'desc')->paginate(10);
+
         return response()->json([
             'status' => 200,
             'message' => 'Data Retrieved',
@@ -41,40 +42,40 @@ class StatusController extends Controller
 
         $data = $request->all();
        
-        $status = Status::create($data);
+        $expenseFrequency = ExpenseFrequency::create($data);
 
         return response()->json([
             'status' => 201,
-            'message' => 'Status Created Successfully',
+            'message' => 'ExpenseFrequency Created Successfully',
             'success' => true,
-            'data' => $status,
+            'data' => $expenseFrequency,
         ], 201);
     }
     public function show($id)
     {
 
-        $status = Status::find($id);
-        if (!$status) {
+        $expenseFrequency = ExpenseFrequency::find($id);
+        if (!$expenseFrequency) {
             return response()->json([
                 'status' => 404,
-                'message' => 'Status Not Found',
+                'message' => 'ExpenseFrequency Not Found',
                 'success' => false,
             ], 404);
         }
         return response()->json([
             'status' => 200,
-            'message' => 'Status Data Retrieved Successfully',
+            'message' => 'ExpenseFrequency Data Retrieved Successfully',
             'success' => true,
-            'data' => $status,
+            'data' => $expenseFrequency,
         ]);
     }
     public function update(Request $request, $id)
     {
-        $status = Status::find($id);
-        if (!$status) {
+        $expenseFrequency = ExpenseFrequency::find($id);
+        if (!$expenseFrequency) {
             return response()->json([
                 'status' => 404,
-                'message' => 'Status Not Found',
+                'message' => 'ExpenseFrequency Not Found',
                 'success' => false,
             ], 404);
         }
@@ -92,31 +93,31 @@ class StatusController extends Controller
         }
         $data = $request->all();
 
-        $status->update($data);
+        $expenseFrequency->update($data);
 
         return response()->json([
             'status' => 200,
-            'message' => 'Status Updated Successfully',
+            'message' => 'ExpenseFrequency Updated Successfully',
             'success' => true,
-            'data' => $status,
+            'data' => $expenseFrequency,
         ]);
     }
 
     public function destroy($id)
     {
-        $status = Status::findOrFail($id);
-        if (!$status) {
+        $expenseFrequency = ExpenseFrequency::findOrFail($id);
+        if (!$expenseFrequency) {
             return response()->json([
                 'status' => 404,
-                'message' => 'Status Not Found',
+                'message' => 'ExpenseFrequency Not Found',
                 'success' => false,
             ], 404);
         }
-        $status->delete();
+        $expenseFrequency->delete();
 
         return response()->json([
             'status' => 200,
-            'message' => 'Status Deleted Successfully',
+            'message' => 'ExpenseFrequency Deleted Successfully',
             'success' => true,
         ]);
     }

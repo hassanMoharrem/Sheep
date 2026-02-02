@@ -1,25 +1,36 @@
 <?php
 namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
-use App\Models\Status;
+use App\Models\Expense;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-// Api controller for managing Statuss in the admin panel
-class StatusController extends Controller
+// Api controller for managing expenses in the admin panel
+class ExpenseController extends Controller
 {
         public function index(Request $request)
     {
-        $query = Status::query();
+        $query = Expense::query();
 
-        if ($request->filled('name')) {
-            $query->where('name', 'like', '%' . $request->name . '%');
-        }
-        $data = $query->orderBy('id', 'desc')->paginate(10);
+        // if ($request->filled('name')) {
+        //     $query->where('name', 'like', '%' . $request->name . '%');
+        // }
+        // إجمالي المصاريف
+        $totalExpenses = $query->sum('amount');
+        // مصروفات الشهر الحالي
+        $currentMonthExpenses = (clone $query)
+            ->whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->sum('amount');
+        $data = $query->orderBy('id', 'desc')->with(['type','frequency'])->paginate(10);
+
         return response()->json([
             'status' => 200,
             'message' => 'Data Retrieved',
             'success' => true,
+             'totalExpenses' => $totalExpenses,
+            'currentMonthExpenses' => $currentMonthExpenses,
             'data' => $data,
+           
         ]);
     }
 
@@ -27,7 +38,9 @@ class StatusController extends Controller
     {
 
         $validator = Validator::make(request()->all(), [
-            'name' => 'required|string|max:255',
+            'expense_type_id' => 'required|integer|exists:expense_types,id',
+            'expense_frequency_id' => 'required|integer|exists:expense_frequencies,id',
+            'amount' => 'required|numeric',
         ]);
         if ($validator->fails()) {
             $response = [
@@ -41,46 +54,50 @@ class StatusController extends Controller
 
         $data = $request->all();
        
-        $status = Status::create($data);
+        $expense = Expense::create($data);
+        $expense->load('frequency','type');
 
         return response()->json([
             'status' => 201,
-            'message' => 'Status Created Successfully',
+            'message' => 'Expense Created Successfully',
             'success' => true,
-            'data' => $status,
+            'data' => $expense,
         ], 201);
     }
     public function show($id)
     {
 
-        $status = Status::find($id);
-        if (!$status) {
+        $expense = Expense::find($id);
+        if (!$expense) {
             return response()->json([
                 'status' => 404,
-                'message' => 'Status Not Found',
+                'message' => 'Expense Not Found',
                 'success' => false,
             ], 404);
         }
+        $expense->load('frequency','type');
         return response()->json([
             'status' => 200,
-            'message' => 'Status Data Retrieved Successfully',
+            'message' => 'Expense Data Retrieved Successfully',
             'success' => true,
-            'data' => $status,
+            'data' => $expense,
         ]);
     }
     public function update(Request $request, $id)
     {
-        $status = Status::find($id);
-        if (!$status) {
+        $expense = Expense::find($id);
+        if (!$expense) {
             return response()->json([
                 'status' => 404,
-                'message' => 'Status Not Found',
+                'message' => 'Expense Not Found',
                 'success' => false,
             ], 404);
         }
 
         $validator = Validator::make(request()->all(), [
-            'name' => 'required|string|max:255',
+            'expense_type_id' => 'required|integer|exists:expense_types,id',
+            'expense_frequency_id' => 'required|integer|exists:expense_frequencies,id',
+            'amount' => 'required|numeric',
         ]);
         if ($validator->fails()) {
             $response = [
@@ -92,31 +109,31 @@ class StatusController extends Controller
         }
         $data = $request->all();
 
-        $status->update($data);
-
+        $expense->update($data);
+        $expense->load('frequency','type');
         return response()->json([
             'status' => 200,
-            'message' => 'Status Updated Successfully',
+            'message' => 'Expense Updated Successfully',
             'success' => true,
-            'data' => $status,
+            'data' => $expense,
         ]);
     }
 
     public function destroy($id)
     {
-        $status = Status::findOrFail($id);
-        if (!$status) {
+        $expense = Expense::findOrFail($id);
+        if (!$expense) {
             return response()->json([
                 'status' => 404,
-                'message' => 'Status Not Found',
+                'message' => 'Expense Not Found',
                 'success' => false,
             ], 404);
         }
-        $status->delete();
+        $expense->delete();
 
         return response()->json([
             'status' => 200,
-            'message' => 'Status Deleted Successfully',
+            'message' => 'Expense Deleted Successfully',
             'success' => true,
         ]);
     }

@@ -34,21 +34,21 @@ class DatabaseSeeder extends Seeder
         }
 
         // Statuses
-        $statuses = ['رضيعه', 'مفطومه', 'ملقحه', 'حامل', 'والد', 'سليم', 'مريض'];
+        $statuses = ['رضيعه', 'فطام', 'تلقيح', 'فحص حمل', 'حايل','حامل', 'ولاده', 'علاج فوري', 'علاج','مراقبه', 'سليم'];
         foreach ($statuses as $statusName) {
             \App\Models\Status::create(['name' => $statusName]);
         }
 
         // Sheep
         for ($i = 1; $i <= 10; $i++) {
-            $currentStatusId = rand(1, 5);
-            $nextStatusId = $currentStatusId < 5 ? $currentStatusId + 1 : 1;
+            $currentStatusId = rand(1, 7);
+            $nextStatusId = $currentStatusId < 7 ? $currentStatusId + 1 : 1;
             DB::table('sheep')->insert([
                 'code' => 'SHP' . $i,
                 'breed_id' => rand(1, count($breeds)),
                 'birth_date' => now()->subYears(rand(1, 3))->subMonths(rand(0, 11)),
                 'gender' => $i % 2 == 0 ? 'female' : 'male',
-                'health_status_id' => rand(6, 7), // سليم أو مريض
+                'health_status_id' => 1,
                 'current_status_id' => $currentStatusId,
                 'next_status_id' => $nextStatusId,
                 'mother_id' => $i > 2 ? rand(1, $i - 1) : null,
@@ -58,16 +58,23 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
-        // // Tasks
-        // for ($i = 1; $i <= 10; $i++) {
-        //     \App\Models\Task::create([
-        //         'sheep_id' => $i,
-        //         'action_type_id' => ['fatem', 'mating', 'pregnancy_check', 'birth'][rand(0, 3)],
-        //         'status_id' => rand(1, 5),
-        //         'scheduled_date' => now()->addDays(rand(1, 30)),
-        //         'status' => 'pending',
-        //         'result' => null,
-        //     ]);
-        // }
+        // expense_frequencys
+        $frequencies = ['يومي', 'اسبوعي', 'شهري', 'سنوي'];
+        foreach ($frequencies as $frequencyName) {
+            \App\Models\ExpenseFrequency::create(['name' => $frequencyName]);
+        }
+        // expense_types
+        $types = ['علف', 'دواء', 'إيجار', 'رواتب', 'صيانة'];
+        foreach ($types as $typeName) {
+            \App\Models\ExpenseType::create(['name' => $typeName]);
+        }
+        // Expenses
+        for ($i = 1; $i <= 20; $i++) {
+            \App\Models\Expense::create([
+                'expense_type_id' => rand(1, count($types)),
+                'expense_frequency_id' => rand(1, count($frequencies)),
+                'amount' => rand(100, 1000),
+            ]);
+        }
     }
 }

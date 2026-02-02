@@ -1,20 +1,20 @@
 <?php
 namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
-use App\Models\Status;
+use App\Models\ExpenseType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-// Api controller for managing Statuss in the admin panel
-class StatusController extends Controller
+// Api controller for managing expense types in the admin panel
+class ExpenseTypeController extends Controller
 {
         public function index(Request $request)
     {
-        $query = Status::query();
-
+        $query = ExpenseType::query();
         if ($request->filled('name')) {
             $query->where('name', 'like', '%' . $request->name . '%');
         }
         $data = $query->orderBy('id', 'desc')->paginate(10);
+
         return response()->json([
             'status' => 200,
             'message' => 'Data Retrieved',
@@ -41,40 +41,40 @@ class StatusController extends Controller
 
         $data = $request->all();
        
-        $status = Status::create($data);
+        $expenseType = ExpenseType::create($data);
 
         return response()->json([
             'status' => 201,
-            'message' => 'Status Created Successfully',
+            'message' => 'ExpenseType Created Successfully',
             'success' => true,
-            'data' => $status,
+            'data' => $expenseType,
         ], 201);
     }
     public function show($id)
     {
 
-        $status = Status::find($id);
-        if (!$status) {
+        $expenseType = ExpenseType::find($id);
+        if (!$expenseType) {
             return response()->json([
                 'status' => 404,
-                'message' => 'Status Not Found',
+                'message' => 'ExpenseType Not Found',
                 'success' => false,
             ], 404);
         }
         return response()->json([
             'status' => 200,
-            'message' => 'Status Data Retrieved Successfully',
+            'message' => 'ExpenseType Data Retrieved Successfully',
             'success' => true,
-            'data' => $status,
+            'data' => $expenseType,
         ]);
     }
     public function update(Request $request, $id)
     {
-        $status = Status::find($id);
-        if (!$status) {
+        $expenseType = ExpenseType::find($id);
+        if (!$expenseType) {
             return response()->json([
                 'status' => 404,
-                'message' => 'Status Not Found',
+                'message' => 'ExpenseType Not Found',
                 'success' => false,
             ], 404);
         }
@@ -92,31 +92,31 @@ class StatusController extends Controller
         }
         $data = $request->all();
 
-        $status->update($data);
+        $expenseType->update($data);
 
         return response()->json([
             'status' => 200,
-            'message' => 'Status Updated Successfully',
+            'message' => 'ExpenseType Updated Successfully',
             'success' => true,
-            'data' => $status,
+            'data' => $expenseType,
         ]);
     }
 
     public function destroy($id)
     {
-        $status = Status::findOrFail($id);
-        if (!$status) {
+        $expenseType = ExpenseType::findOrFail($id);
+        if (!$expenseType) {
             return response()->json([
                 'status' => 404,
-                'message' => 'Status Not Found',
+                'message' => 'ExpenseType Not Found',
                 'success' => false,
             ], 404);
         }
-        $status->delete();
+        $expenseType->delete();
 
         return response()->json([
             'status' => 200,
-            'message' => 'Status Deleted Successfully',
+            'message' => 'ExpenseType Deleted Successfully',
             'success' => true,
         ]);
     }

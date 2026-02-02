@@ -129,8 +129,7 @@ class SheepController extends Controller
     // }
     public function index(Request $request)
     {
-        $query = Sheep::query();
-
+        $query = Sheep::with('breed', 'currentStatus','nextStatus', 'mother')->where('visible', 1);
         if ($request->filled('gender')) {
             $query->where('gender', $request->gender);
         }
@@ -146,8 +145,12 @@ class SheepController extends Controller
         if ($request->filled('birth_date')) {
             $query->whereDate('birth_date', '>=', $request->birth_date);
         }
-
-        $data = $query->orderBy('id', 'desc')->paginate(10);
+        //where sort descending by id or ascending
+        if ($request->filled('sort') && in_array($request->sort, ['asc', 'desc'])) {
+            $query->orderBy('id', $request->sort);
+        }
+        // paginate the results
+        $data = $query->paginate(10);
         return response()->json([
             'status' => 200,
             'message' => 'Data Retrieved',
@@ -159,11 +162,22 @@ class SheepController extends Controller
     public function popularMothers()
     {
         // id ,code , birth_date, count offspring
-        $data = Sheep::select('id', 'code', 'birth_date')
+        $data = Sheep::where('visible', 1)->select('id', 'code', 'birth_date')
         ->withCount('offspring')
         ->whereHas('offspring')
         ->orderBy('offspring_count', 'desc')
         ->get();
+        return response()->json([
+            'status' => 200,
+            'message' => 'Data Retrieved',
+            'success' => true,
+            'data' => $data,
+        ]);
+    }
+    public function getDataFast()
+    {
+        // Get all sheep with only id and code
+        $data = Sheep::select('id', 'code')->where('visible', 1)->where('gender', 'female')->get();
         return response()->json([
             'status' => 200,
             'message' => 'Data Retrieved',
@@ -178,7 +192,8 @@ class SheepController extends Controller
             'breed_id' => 'required|exists:breeds,id',
             'birth_date' => 'required|date',
             'gender' => 'required|in:male,female',
-            'health_status_id' => 'required|exists:statuses,id',
+            'health_status_id' => 'required|in:1,2,3', // enum ['1', '3', '2']
+            'weight' => 'required|string|max:255',
             'current_status_id' => 'required|exists:statuses,id',
             'mother_id' => 'nullable|exists:sheep,id',
             'is_active' => 'required|boolean',
@@ -198,10 +213,16 @@ class SheepController extends Controller
             $currentStatus = \App\Models\Status::find($request->current_status_id);
 
             $nextName = match ($currentStatus?->name) {
-                'رضيعه'          => 'مفطومه',
-                'مفطومه', 'والد' => 'ملقحه', // Multiple cases pointing to one result
-                'ملقحه'          => 'حامل',
-                'حامل'           => 'والد',
+                'رضيعه'          => 'فطام',
+                'فطام', 'والده' => 'تلقيح', // Multiple cases pointing to one result
+                'تلقيح'          => 'فحص حمل',
+                'فحص حمل'       => 'حامل',
+                'حايل'          => 'فحص حمل',
+                'حامل'           => 'والده',
+                'ولاده'         => 'تلقيح',
+                'علاج فوري'     => 'علاج',
+                'علاج'           => 'مراقبه',
+                'مراقبه'        => 'سليم',
                 default          => null,
             };
 
@@ -211,10 +232,6 @@ class SheepController extends Controller
             }
         }
         $sheep = Sheep::create($data);
-
-        // إذا كانت أنثى وليست "رضيعه"، أضف لها أول مهمة تلقائية حسب الحالة
-        // when she is  
-        //  رضيعى =< مفطومه => ملقحه => حامل => والد => ملقحه => ....
         if ($sheep->gender === 'female') {
             $status = \App\Models\Status::find($sheep->current_status_id);
             if ($status) {
@@ -223,30 +240,47 @@ class SheepController extends Controller
                 $now = now();
                 switch ($status->name) {
                     case 'رضيعه':
-                        $nextAction = Status::where('name', 'مفطومه')->first()->id; // فطام
+                        $nextAction = Status::where('name', 'فطام')->first()->id; // فطام
                         $nextDate = $now->addMonths(2);
                         break;
-                    case 'مفطومه':
-                        $nextAction = Status::where('name', 'ملقحه')->first()->id; // تلقيح 
+                    case 'فطام':
+                        $nextAction = Status::where('name', 'تلقيح')->first()->id; // تلقيح 
                         $nextDate = $now->addMonths(6);
                         break;
-                    case 'ملقحه':
-                        $nextAction = Status::where('name', 'حامل')->first()->id; // فحص حمل
+                    case 'تلقيح':
+                        $nextAction = Status::where('name', 'فحص حمل')->first()->id; // فحص حمل
                         $nextDate = $now->addMonths(3);
                         break;
-                    // case 'فحص حمل':
-                    //     $nextAction = 3; // ولادة
-                    //     $nextDate = $now->addMonths(2);    
                     case 'حامل':
-                        $nextAction = Status::where('name', 'والد')->first()->id; // ولادة
+                        $nextAction = Status::where('name', 'حامل')->first()->id; // حامل
+                        $nextDate = $now->addMonths(2);  
+                        break;
+                    case 'حايل':
+                        $nextAction = Status::where('name', 'فحص حمل')->first()->id; // فحص حمل
+                        $nextDate = $now->addDays(10);  //10 day
+                        break;
+                    case 'حامل':
+                        $nextAction = Status::where('name', 'ولاده')->first()->id; // ولادة
                         $nextDate = $now->addMonths(2);
                         break;
-                    case 'والد':
-                        $nextAction = Status::where('name', 'ملقحه')->first()->id; // تلقيح 
+                    case 'ولاده':
+                        $nextAction = Status::where('name', 'تلقيح')->first()->id; // تلقيح 
                         $nextDate = $now->addDays(35);
                         break;
+                    case 'علاج فوري':
+                        $nextAction = Status::where('name', 'علاج')->first()->id; // علاج
+                        $nextDate = null; // حسب الحالة
+                        break;
+                    case 'علاج':
+                        $nextAction = Status::where('name', 'مراقبه')->first()->id; // مراقبه
+                        $nextDate = $now->addDays(3);
+                        break;
+                    case 'مراقبه':
+                        $nextAction = Status::where('name', 'سليم')->first()->id; // سليم
+                        $nextDate = $now->addDays(7);
+                        break;
                 }
-                if ($nextAction && $nextDate) {
+                if ($nextAction) {
                     \App\Models\Task::create([
                         'sheep_id' => $sheep->id,
                         'action_type_id' => $nextAction,
@@ -262,6 +296,7 @@ class SheepController extends Controller
                 'body' => $request->note,
             ]);
         }
+        $sheep->load('breed', 'currentStatus','nextStatus', 'mother');
 
         return response()->json([
             'status' => 201,
@@ -280,6 +315,7 @@ class SheepController extends Controller
                 'success' => false,
             ], 404);
         }
+        $sheep->load('breed', 'currentStatus','nextStatus', 'mother');
         return response()->json([
             'status' => 200,
             'message' => 'Sheep Retrieved Successfully',
@@ -302,6 +338,7 @@ class SheepController extends Controller
             'code' => 'unique:sheep,code,' . $sheep->id . '|string|max:255',
             'breed_id' => 'exists:breeds,id',
             'birth_date' => 'date',
+            'weight' => 'nullable|string|max:255',
             'gender' => 'in:male,female',
             'is_active' => 'boolean',
         ]);
@@ -315,11 +352,50 @@ class SheepController extends Controller
 
         $data = $request->all();
         $sheep->update($data);
+        $sheep->load('breed', 'currentStatus','nextStatus', 'mother');
         return response()->json([
             'status' => 200,
             'message' => 'Sheep Updated Successfully',
             'success' => true,
             'data' => $sheep,
+        ], 200);
+    }
+    public function toggleVisibility(Request $request, $id)
+    {
+        $sheep = Sheep::find($id);
+        if (!$sheep) {
+            return response()->json([
+                'status' => 404,
+                'message' => 'Sheep Not Found',
+                'success' => false,
+            ], 404);
+        }
+        $validator = Validator::make($request->all(), [
+            'note' => 'nullable|string|max:255',
+        ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 400,
+                'success' => false,
+                'message' => $validator->errors(),
+            ], 400);
+        }
+        if ($request->filled('note')) {
+            Note::create([
+                'sheep_id' => $sheep->id,
+                'body' => $request->note,
+            ]);
+        }
+        $sheep->visible = !$sheep->visible;
+        $sheep->save();
+        return response()->json([
+            'status' => 200,
+            'message' => 'Sheep visibility toggled successfully',
+            'success' => true,
+            'data' => [
+                'id' => $sheep->id,
+                'visible' => $sheep->visible,
+            ],
         ], 200);
     }
 

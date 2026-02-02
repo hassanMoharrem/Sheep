@@ -7,15 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 class Sheep extends Model
 {
     protected $table = 'sheep';
-    protected $fillable = ['code', 'breed_id', 'gender','health_status_id','current_status_id','next_status_id', 'birth_date', 'mother_id' ,'is_active'];
+    protected $fillable = ['code', 'breed_id', 'gender','health_status_id','current_status_id','next_status_id', 'birth_date', 'weight', 'mother_id' ,'is_active', 'visible'];
 
     public function breed()
     {
         return $this->belongsTo(Breed::class);
-    }
-    public function healthStatus()
-    {
-        return $this->belongsTo(Status::class, 'health_status_id');
     }
     public function currentStatus()
     {
