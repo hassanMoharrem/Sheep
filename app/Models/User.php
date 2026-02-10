@@ -26,6 +26,7 @@ class User extends Authenticatable
         'city',
         'avatar',
         'role',
+        'fcm_token',
     ];
 
     /**

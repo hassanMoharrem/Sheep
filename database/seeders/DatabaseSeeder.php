@@ -76,5 +76,40 @@ class DatabaseSeeder extends Seeder
                 'amount' => rand(100, 1000),
             ]);
         }
+        // Settings
+            \App\Models\Setting::create([
+                'key' => 'breeding_after_birth',
+                'label' => 'مدة التلقيح بعد الولادة',
+                'type' => 'duration',
+                'value' => '60', // 60 يوم بعد الولادة
+            ]);
+            \App\Models\Setting::create([
+                'key' => 'breeding_after_weaning',
+                'label' => 'مدة التلقيح بعد الفطام',
+                'type' => 'duration',
+                'value' => '180', // 180 يوم بعد الفطام
+            ]);
+
+             \App\Models\Setting::create([
+                'key' => 'expected_price_under_3_months',
+                'label' => 'السعر المتوقع لأقل من 3 شهور',
+                'type' => 'currency',
+                'value' => '100', // السعر المتوقع لأقل من 3 شهور
+            ]);
+
+             \App\Models\Setting::create([
+                'key' => 'expected_price_3_to_6_months',
+                'label' => 'السعر المتوقع بين 3 إلى 6 شهور',
+                'type' => 'currency',
+                'value' => '200', // السعر المتوقع بين 3 إلى 6 شهور
+            ]);
+
+             \App\Models\Setting::create([
+                'key' => 'expected_price_over_6_months_male',
+                'label' => 'السعر المتوقع لأكثر من 6 شهور - ذكر',
+                'type' => 'currency',
+                'value' => '300', // السعر المتوقع لأكثر من 6 شهور - ذكر
+            ]);
+
     }
 }

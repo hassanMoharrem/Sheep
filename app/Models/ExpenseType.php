@@ -11,10 +11,18 @@ class ExpenseType extends Model
 
     protected $fillable = [
         'name',
+        'image',
     ];
 
     public function expenses()
     {
         return $this->hasMany(Expense::class);
+    }
+    public function getImageAttribute($value)
+    {
+        if ($value) {
+            return asset('storage/' . $value);
+        }
+        return null;
     }
 }

@@ -28,6 +28,7 @@ class ExpenseTypeController extends Controller
 
         $validator = Validator::make(request()->all(), [
             'name' => 'required|string|max:255',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
         if ($validator->fails()) {
             $response = [
@@ -38,9 +39,12 @@ class ExpenseTypeController extends Controller
             return response()->json($response, 400);
         }
 
-
         $data = $request->all();
-       
+
+        if ($request->hasFile('image')) {
+            $data['image'] = $request->file('image')->store('expense_types', 'public');
+        }
+
         $expenseType = ExpenseType::create($data);
 
         return response()->json([
@@ -81,6 +85,7 @@ class ExpenseTypeController extends Controller
 
         $validator = Validator::make(request()->all(), [
             'name' => 'required|string|max:255',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
         if ($validator->fails()) {
             $response = [
@@ -91,6 +96,13 @@ class ExpenseTypeController extends Controller
             return response()->json($response, 400);
         }
         $data = $request->all();
+
+        if ($request->hasFile('image')) {
+            if ($expenseType->image) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($expenseType->image);
+            }
+            $data['image'] = $request->file('image')->store('expense_types', 'public');
+        }
 
         $expenseType->update($data);
 

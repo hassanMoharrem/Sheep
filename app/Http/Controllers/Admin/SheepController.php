@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Note;
+use App\Models\Setting;
 use App\Models\Sheep;
 use App\Models\Status;
 use Illuminate\Http\Request;
@@ -193,7 +194,7 @@ class SheepController extends Controller
             'birth_date' => 'required|date',
             'gender' => 'required|in:male,female',
             'health_status_id' => 'required|in:1,2,3', // enum ['1', '3', '2']
-            'weight' => 'required|string|max:255',
+            'weight' => 'required|numeric',
             'current_status_id' => 'required|exists:statuses,id',
             'mother_id' => 'nullable|exists:sheep,id',
             'is_active' => 'required|boolean',
@@ -289,6 +290,45 @@ class SheepController extends Controller
                     ]);
                 }
             }
+        }else {
+            $status = \App\Models\Status::find($sheep->current_status_id);
+            if ($status) {
+                $nextAction = null;
+                $nextDate = null;
+                $now = now();
+                switch ($status->name) {
+                    // رضيع ثم فطام ثم سليم
+                    case 'رضيعه':
+                        $nextAction = Status::where('name', 'فطام')->first()->id; // فطام
+                        $nextDate = $now->addMonths(2);
+                        break;
+                    case 'فطام':
+                        $nextAction = Status::where('name', 'سليم')->first()->id; // سليم
+                        $nextDate = $now->addMonths(4);
+                        break;
+                    case 'علاج فوري':
+                        $nextAction = Status::where('name', 'علاج')->first()->id; // علاج
+                        $nextDate = null; // حسب الحالة
+                        break;
+                    case 'علاج':
+                        $nextAction = Status::where('name', 'مراقبه')->first()->id; // مراقبه
+                        $nextDate = $now->addDays(3);
+                        break;
+                    case 'مراقبه':
+                        $nextAction = Status::where('name', 'سليم')->first()->id; // سليم
+                        $nextDate = $now->addDays(7);
+                        break;
+
+                }
+                if ($nextAction) {
+                    \App\Models\Task::create([
+                        'sheep_id' => $sheep->id,
+                        'action_type_id' => $nextAction,
+                        'scheduled_date' => $nextDate,
+                        'status' => 'pending',
+                    ]);
+                }
+            }
         }
         if ($request->filled('note')) {
             Note::create([
@@ -338,7 +378,7 @@ class SheepController extends Controller
             'code' => 'unique:sheep,code,' . $sheep->id . '|string|max:255',
             'breed_id' => 'exists:breeds,id',
             'birth_date' => 'date',
-            'weight' => 'nullable|string|max:255',
+            'weight' => 'nullable|numeric|min:0',
             'gender' => 'in:male,female',
             'is_active' => 'boolean',
         ]);

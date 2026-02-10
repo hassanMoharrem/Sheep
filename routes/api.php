@@ -8,9 +8,14 @@ use App\Http\Controllers\Admin\NoteController;
 
 // Login route for Sanctum
 Route::post('login', [LoginController::class, 'login']);
+Route::post('login/phone', [LoginController::class, 'loginWithPhone']);
+
+// Logout route for Sanctum
+Route::middleware(['auth:sanctum'])->post('logout', [LoginController::class, 'logout']);
 
 
 Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
+    
     Route::prefix('sheep')->group(function() {
         Route::get('/', [SheepController::class, 'index']);
         Route::get('/fast', [SheepController::class, 'getDataFast']);
@@ -35,6 +40,12 @@ Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
         Route::put('/{id}', [\App\Http\Controllers\Admin\TaskController::class, 'update']);
         Route::put('/result/{id}', [\App\Http\Controllers\Admin\TaskController::class, 'updateActionType']);
         // Route::delete('/{id}', [\App\Http\Controllers\Admin\TaskController::class, 'destroy']);
+    });
+    // Notifications API
+    Route::prefix('notifications')->group(function() {
+        Route::get('/', [\App\Http\Controllers\Admin\NotificationController::class, 'index']);
+        Route::delete('/{id}', [\App\Http\Controllers\Admin\NotificationController::class, 'destroy']);
+        Route::delete('/', [\App\Http\Controllers\Admin\NotificationController::class, 'destroyAll']);
     });
     Route::prefix('statuses')->group(function() {
         Route::get('/', [\App\Http\Controllers\Admin\StatusController::class, 'index']);
@@ -77,7 +88,24 @@ Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
         Route::get('/{id}', [\App\Http\Controllers\Admin\SaleController::class, 'show']);
         Route::delete('/{id}', [\App\Http\Controllers\Admin\SaleController::class, 'destroy']);
     });
+    Route::prefix('settings')->group(function() {
+        Route::get('/', [\App\Http\Controllers\Admin\SettingController::class, 'index']);
+        Route::post('create/', [\App\Http\Controllers\Admin\SettingController::class, 'storeSingle']);
+        Route::post('/', [\App\Http\Controllers\Admin\SettingController::class, 'store']);
+        Route::get('/{id}', [\App\Http\Controllers\Admin\SettingController::class, 'show']);
+        Route::put('/{id}', [\App\Http\Controllers\Admin\SettingController::class, 'update']);
+        Route::delete('/{id}', [\App\Http\Controllers\Admin\SettingController::class, 'destroy']);
+    });
+    Route::prefix('notifications')->group(function() {
+        Route::get('/', [\App\Http\Controllers\Admin\NotificationController::class, 'index']);
+        Route::delete('/{id}', [\App\Http\Controllers\Admin\NotificationController::class, 'destroy']);
+        Route::delete('/', [\App\Http\Controllers\Admin\NotificationController::class, 'destroyAll']);
+    });
 
+    // Logout   
+    Route::post('logout', [\App\Http\Controllers\Auth\LoginController::class, 'logout']);
+    // login with phone
+    Route::post('login/phone', [\App\Http\Controllers\Auth\LoginController::class, 'loginWithPhone']);
 
 });
 

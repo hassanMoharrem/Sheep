@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <title>Firebase Phone Test</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 700px; margin: 40px auto; }
+    input, button { padding: 10px; margin: 6px 0; width: 100%; }
+    pre { background: #f5f5f5; padding: 10px; overflow: auto; }
+  </style>
+</head>
+<body>
+  <h2>اختبار تسجيل الدخول برقم الهاتف (Firebase)</h2>
+
+  <label>رقم الهاتف (مع كود الدولة):</label>
+  <input id="phone" placeholder="+9665xxxxxxxx" />
+
+  <div id="recaptcha-container"></div>
+  <button id="sendCode">إرسال الكود</button>
+
+  <label>أدخل الكود:</label>
+  <input id="code" placeholder="123456" />
+  <button id="verifyCode">تأكيد الكود</button>
+
+  <h3>ID Token</h3>
+  <pre id="token">---</pre>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+    import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+
+    // ضع إعدادات Firebase من الكونسل
+const firebaseConfig = {
+
+  apiKey: "AIzaSyB5tRIORVFm6igrMhboOy-Vr1I9vUULojI",
+
+  authDomain: "sheep-6ea6e.firebaseapp.com",
+
+  databaseURL: "https://sheep-6ea6e-default-rtdb.firebaseio.com",
+
+  projectId: "sheep-6ea6e",
+
+  storageBucket: "sheep-6ea6e.firebasestorage.app",
+
+  messagingSenderId: "72489195950",
+
+  appId: "1:72489195950:web:706c16ada1332687e0503f",
+
+  measurementId: "G-QE8KZ5J0N2"
+
+};
+
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    const recaptcha = new RecaptchaVerifier(auth, "recaptcha-container", {
+      size: "normal",
+    });
+
+    let confirmationResult = null;
+
+    document.getElementById("sendCode").addEventListener("click", async () => {
+      const phone = document.getElementById("phone").value.trim();
+      if (!phone) return alert("أدخل رقم الهاتف");
+      try {
+        confirmationResult = await signInWithPhoneNumber(auth, phone, recaptcha);
+        alert("تم إرسال الكود");
+      } catch (e) {
+        console.error(e);
+        alert("فشل الإرسال");
+      }
+    });
+
+    document.getElementById("verifyCode").addEventListener("click", async () => {
+      const code = document.getElementById("code").value.trim();
+      if (!confirmationResult) return alert("أرسل الكود أولاً");
+      try {
+        const result = await confirmationResult.confirm(code);
+        const idToken = await result.user.getIdToken();
+        document.getElementById("token").textContent = idToken;
+      } catch (e) {
+        console.error(e);
+        alert("الكود غير صحيح");
+      }
+    });
+  </script>
+</body>
+</html>
