@@ -66,7 +66,9 @@ class DatabaseSeeder extends Seeder
         // expense_types
         $types = ['علف', 'دواء', 'إيجار', 'رواتب', 'صيانة'];
         foreach ($types as $typeName) {
-            \App\Models\ExpenseType::create(['name' => $typeName]);
+            \App\Models\ExpenseType::create([
+                'name' => $typeName,
+            ]);
         }
         // Expenses
         for ($i = 1; $i <= 20; $i++) {
@@ -88,6 +90,12 @@ class DatabaseSeeder extends Seeder
                 'label' => 'مدة التلقيح بعد الفطام',
                 'type' => 'duration',
                 'value' => '180', // 180 يوم بعد الفطام
+            ]);
+            \App\Models\Setting::create([
+                'key' => 'vaccination_cycle',
+                'label' => 'دورة التلقيح',
+                'type' => 'duration',
+                'value' => '7', // 7 أيام
             ]);
 
              \App\Models\Setting::create([

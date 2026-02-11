@@ -106,7 +106,10 @@ Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
     Route::post('logout', [\App\Http\Controllers\Auth\LoginController::class, 'logout']);
     // login with phone
     Route::post('login/phone', [\App\Http\Controllers\Auth\LoginController::class, 'loginWithPhone']);
-
+    Route::post('check-phone', [\App\Http\Controllers\Auth\LoginController::class, 'checkPhone']);
+    // Profile
+    Route::get('profile', [\App\Http\Controllers\Admin\ProfileController::class, 'profile']);
+    Route::put('profile', [\App\Http\Controllers\Admin\ProfileController::class, 'update']);
 });
 
 

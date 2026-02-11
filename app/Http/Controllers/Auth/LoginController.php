@@ -53,72 +53,113 @@ class LoginController extends Controller
         ]);
     }
 
-    public function loginWithPhone(Request $request)
+public function loginWithPhone(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'id_token'  => 'required|string',
+        'fcm_token' => 'nullable|string',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'status' => 400,
+            'success' => false,
+            'message' => $validator->errors(),
+        ], 400);
+    }
+
+    try {
+        $auth = app(FirebaseService::class)->getAuth();
+
+        // تحقق من id_token القادم من Firebase
+        $verifiedIdToken = $auth->verifyIdToken($request->id_token);
+
+        // جلب رقم الهاتف من Firebase
+        $phoneNumber = $verifiedIdToken->claims()->get('phone_number');
+
+    } catch (\Throwable $e) {
+        return response()->json([
+            'status' => 401,
+            'success' => false,
+            'message' => 'Invalid Firebase ID token',
+        ], 401);
+    }
+
+    if (!$phoneNumber) {
+        return response()->json([
+            'status' => 400,
+            'success' => false,
+            'message' => 'Phone number not found in token',
+        ], 400);
+    }
+
+    // توحيد صيغة الرقم
+    $normalized = trim($phoneNumber);
+
+    $variants = [$normalized];
+    if (str_starts_with($normalized, '+')) {
+        $variants[] = ltrim($normalized, '+');
+    } else {
+        $variants[] = '+' . $normalized;
+    }
+
+    // البحث عن المستخدم
+    $user = User::whereIn('phone', $variants)->first();
+
+    if (!$user) {
+        return response()->json([
+            'status' => 404,
+            'success' => false,
+            'message' => 'User not found',
+        ], 404);
+    }
+
+    // حفظ fcm token لو موجود
+    if ($request->filled('fcm_token')) {
+        $user->fcm_token = $request->fcm_token;
+        $user->save();
+    }
+
+    // إنشاء توكن لارافيل
+    $token = $user->createToken('auth_token')->plainTextToken;
+
+    return response()->json([
+        'status' => 200,
+        'success' => true,
+        'message' => 'Login successful',
+        'token' => $token,
+        'user' => $user,
+    ]);
+}
+    public function checkPhone(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'id_token' => 'required|string',
-            'fcm_token' => 'nullable|string',
+        $request->validate([
+            'phone' => 'required|string'
         ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => 400,
-                'success' => false,
-                'message' => $validator->errors(),
-            ], 400);
-        }
+        $phone = trim($request->phone);
 
-        try {
-            $auth = app(FirebaseService::class)->getAuth();
-            $verifiedIdToken = $auth->verifyIdToken($request->id_token);
-            $phoneNumber = $verifiedIdToken->claims()->get('phone_number');
-        } catch (\Throwable $e) {
-            return response()->json([
-                'status' => 401,
-                'success' => false,
-                'message' => 'Invalid Firebase ID token',
-            ], 401);
-        }
-
-        if (!$phoneNumber) {
-            return response()->json([
-                'status' => 400,
-                'success' => false,
-                'message' => 'Phone number not found in token',
-            ], 400);
-        }
-
-        $normalized = trim($phoneNumber);
-        $variants = [$normalized];
-        if (str_starts_with($normalized, '+')) {
-            $variants[] = ltrim($normalized, '+');
+        $variants = [$phone];
+        if (str_starts_with($phone, '+')) {
+            $variants[] = ltrim($phone, '+');
         } else {
-            $variants[] = '+' . $normalized;
+            $variants[] = '+' . $phone;
         }
 
         $user = User::whereIn('phone', $variants)->first();
 
         if (!$user) {
             return response()->json([
-                'status' => 404,
-                'success' => false,
-                'message' => 'User not found for this phone number',
-            ], 404);
+                'status'=>404,
+                'success'=>false,
+                'message'=>'User not found'
+            ],404);
         }
-
-        if ($request->filled('fcm_token')) {
-            $user->fcm_token = $request->fcm_token;
-            $user->save();
-        }
-
-        $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
-            'status' => 200,
-            'success' => true,
-            'message' => 'Login successful',
-            'token' => $token,
-            'user' => $user,
+            'status'=>200,
+            'success'=>true,
+            'message'=>'User exists'
         ]);
     }
 

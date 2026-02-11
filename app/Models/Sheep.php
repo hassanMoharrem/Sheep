@@ -34,4 +34,30 @@ class Sheep extends Model
         return $this->hasMany(Task::class);
     }
 
+    /**
+     * حساب السعر المتوقع بناءً على عمر الخاروف والإعدادات
+     */
+    public function getExpectedPriceAttribute()
+    {
+        if (!$this->birth_date) {
+            return null;
+        }
+
+        $birthDate = \Carbon\Carbon::parse($this->birth_date);
+        $ageInMonths = $birthDate->diffInMonths(now());
+
+        if ($ageInMonths < 3) {
+            $key = 'expected_price_under_3_months';
+        } elseif ($ageInMonths <= 6) {
+            $key = 'expected_price_3_to_6_months';
+        } else {
+            $key = 'expected_price_over_6_months_male';
+        }
+
+        $setting = Setting::where('key', $key)->first();
+        return $setting ? (float) $setting->value : null;
+    }
+
+    protected $appends = ['expected_price'];
+
 }
